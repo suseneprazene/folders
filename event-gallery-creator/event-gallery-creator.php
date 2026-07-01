@@ -116,12 +116,12 @@ exit;
 private function is_valid_event( $event_id ) {
 $event = get_post( $event_id );
 if ( ! $event ) {
-	return false;
+    return false;
 }
 
 $post_type = $this->event_post_type();
 if ( '' === $post_type ) {
-	return false;
+    return false;
 }
 
 return $event->post_type === $post_type;
@@ -341,11 +341,11 @@ $show_hidden     = $this->current_show_hidden();
 $paged           = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
 $selected_event  = 0;
 if ( isset( $_GET['event_id'] ) ) {
-	$candidate_event = absint( $_GET['event_id'] );
-	$nonce           = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
-	if ( $candidate_event > 0 && wp_verify_nonce( $nonce, 'egc_select_event_' . $candidate_event ) ) {
-		$selected_event = $candidate_event;
-	}
+    $candidate_event = absint( $_GET['event_id'] );
+    $nonce           = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+    if ( $candidate_event > 0 && wp_verify_nonce( $nonce, 'egc_select_event_' . $candidate_event ) ) {
+        $selected_event = $candidate_event;
+    }
 }
 $events          = $this->event_query( $show_hidden, $paged, 20 );
 ?>
