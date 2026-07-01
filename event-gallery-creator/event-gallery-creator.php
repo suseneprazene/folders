@@ -504,12 +504,7 @@ return $slug;
 }
 
 global $wpdb;
-$posts_table    = esc_sql( $wpdb->posts );
-$postmeta_table = esc_sql( $wpdb->postmeta );
-$sql            = $wpdb->prepare(
-'SELECT p.post_type FROM ' . $posts_table . ' p INNER JOIN ' . $postmeta_table . ' pm ON pm.post_id = p.ID WHERE pm.meta_key = %s LIMIT 1',
-'_gallery_images'
-);
+$sql = "SELECT p.post_type FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID WHERE pm.meta_key = '_gallery_images' LIMIT 1";
 $post_type = $wpdb->get_var( $sql );
 if ( ! empty( $post_type ) && post_type_exists( $post_type ) ) {
 return $post_type;
