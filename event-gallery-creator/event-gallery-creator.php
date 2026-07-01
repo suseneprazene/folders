@@ -116,12 +116,12 @@ exit;
 private function is_valid_event( $event_id ) {
 $event = get_post( $event_id );
 if ( ! $event ) {
-    return false;
+	return false;
 }
 
 $post_type = $this->event_post_type();
 if ( '' === $post_type ) {
-    return false;
+	return false;
 }
 
 return $event->post_type === $post_type;
@@ -341,11 +341,11 @@ $show_hidden     = $this->current_show_hidden();
 $paged           = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
 $selected_event  = 0;
 if ( isset( $_GET['event_id'] ) ) {
-    $candidate_event = absint( $_GET['event_id'] );
-    $nonce           = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
-    if ( $candidate_event > 0 && wp_verify_nonce( $nonce, 'egc_select_event_' . $candidate_event ) ) {
-        $selected_event = $candidate_event;
-    }
+	$candidate_event = absint( $_GET['event_id'] );
+	$nonce           = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+	if ( $candidate_event > 0 && wp_verify_nonce( $nonce, 'egc_select_event_' . $candidate_event ) ) {
+		$selected_event = $candidate_event;
+	}
 }
 $events          = $this->event_query( $show_hidden, $paged, 20 );
 ?>
@@ -481,13 +481,19 @@ final class EGC_Gallery_Service {
 private function discover_post_type() {
 global $gllr_options;
 
-if ( is_array( $gllr_options ) && ! empty( $gllr_options['post_type_name'] ) && post_type_exists( $gllr_options['post_type_name'] ) ) {
-return $gllr_options['post_type_name'];
+if ( is_array( $gllr_options ) && ! empty( $gllr_options['post_type_name'] ) ) {
+$post_type_name = sanitize_key( $gllr_options['post_type_name'] );
+if ( post_type_exists( $post_type_name ) ) {
+	return $post_type_name;
+}
 }
 
 $options = get_option( 'gllr_options' );
-if ( is_array( $options ) && ! empty( $options['post_type_name'] ) && post_type_exists( $options['post_type_name'] ) ) {
-return $options['post_type_name'];
+if ( is_array( $options ) && ! empty( $options['post_type_name'] ) ) {
+$post_type_name = sanitize_key( $options['post_type_name'] );
+if ( post_type_exists( $post_type_name ) ) {
+	return $post_type_name;
+}
 }
 
 $known = array( 'bws-gallery', 'gllr_gallery', 'gallery' );
@@ -498,8 +504,10 @@ return $slug;
 }
 
 global $wpdb;
-$sql = $wpdb->prepare(
-'SELECT p.post_type FROM ' . $wpdb->posts . ' p INNER JOIN ' . $wpdb->postmeta . ' pm ON pm.post_id = p.ID WHERE pm.meta_key = %s LIMIT 1',
+$posts_table    = esc_sql( $wpdb->posts );
+$postmeta_table = esc_sql( $wpdb->postmeta );
+$sql            = $wpdb->prepare(
+'SELECT p.post_type FROM ' . $posts_table . ' p INNER JOIN ' . $postmeta_table . ' pm ON pm.post_id = p.ID WHERE pm.meta_key = %s LIMIT 1',
 '_gallery_images'
 );
 $post_type = $wpdb->get_var( $sql );
