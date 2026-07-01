@@ -104,6 +104,11 @@ array(
 ),
 $extra_args
 );
+
+if ( ! empty( $args['event_id'] ) ) {
+$args['_wpnonce'] = wp_create_nonce( 'egc_select_event_' . absint( $args['event_id'] ) );
+}
+
 wp_safe_redirect( $this->admin_url( $args ) );
 exit;
 }
@@ -333,7 +338,14 @@ wp_die( esc_html__( 'Insufficient permissions.', 'event-gallery-creator' ) );
 $event_post_type = $this->event_post_type();
 $show_hidden     = $this->current_show_hidden();
 $paged           = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
-$selected_event  = isset( $_GET['event_id'] ) ? absint( $_GET['event_id'] ) : 0;
+$selected_event  = 0;
+if ( isset( $_GET['event_id'] ) ) {
+	$candidate_event = absint( $_GET['event_id'] );
+	$nonce           = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+	if ( $candidate_event > 0 && wp_verify_nonce( $nonce, 'egc_select_event_' . $candidate_event ) ) {
+		$selected_event = $candidate_event;
+	}
+}
 $events          = $this->event_query( $show_hidden, $paged, 20 );
 ?>
 <div class="wrap">
@@ -360,6 +372,7 @@ $class = 'notice-error';
 <input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>" />
 <?php if ( $selected_event ) : ?>
 <input type="hidden" name="event_id" value="<?php echo esc_attr( $selected_event ); ?>" />
+<input type="hidden" name="_wpnonce" value="<?php echo esc_attr( wp_create_nonce( 'egc_select_event_' . $selected_event ) ); ?>" />
 <?php endif; ?>
 <label>
 <input type="checkbox" name="show_hidden" value="1" <?php checked( $show_hidden ); ?> />
@@ -386,6 +399,7 @@ $event_date   = wp_date( 'j. F Y H:i', $this->get_event_timestamp( $event->ID ) 
 $select_url   = $this->admin_url(
 array(
 'event_id'    => $event->ID,
+'_wpnonce'    => wp_create_nonce( 'egc_select_event_' . $event->ID ),
 'show_hidden' => $show_hidden ? 1 : 0,
 'paged'       => $paged,
 )
@@ -423,6 +437,7 @@ array(
 'page'        => self::PAGE_SLUG,
 'show_hidden' => $show_hidden ? 1 : 0,
 'event_id'    => $selected_event,
+'_wpnonce'    => $selected_event ? wp_create_nonce( 'egc_select_event_' . $selected_event ) : '',
 'paged'       => '%#%',
 ),
 admin_url( 'tools.php' )
@@ -556,13 +571,7 @@ __( 'Folders by Premio integration was not detected. Gallery creation continued 
 
 $term = get_term_by( 'name', $folder_name, $taxonomy );
 if ( ! $term || is_wp_error( $term ) ) {
-$inserted = wp_insert_term(
-$folder_name,
-$taxonomy,
-array(
-'slug' => sanitize_title( $folder_name ) . '-' . time(),
-)
-);
+$inserted = wp_insert_term( $folder_name, $taxonomy );
 if ( is_wp_error( $inserted ) ) {
 return new WP_Error(
 'egc_folder_create_failed',
