@@ -33,6 +33,7 @@ $this->gallery_service = new EGC_Gallery_Service();
 
 private function hooks() {
 add_action( 'admin_menu', array( $this, 'register_menu' ) );
+add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_link' ), 100 );
 add_action( 'admin_post_egc_toggle_hidden', array( $this, 'handle_toggle_hidden' ) );
 add_action( 'admin_post_egc_create_gallery', array( $this, 'handle_create_gallery' ) );
 }
@@ -44,6 +45,20 @@ __( 'Event gallery creator', 'event-gallery-creator' ),
 'upload_files',
 self::PAGE_SLUG,
 array( $this, 'render_page' )
+);
+}
+
+public function add_admin_bar_link( $wp_admin_bar ) {
+if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) ) {
+return;
+}
+
+$wp_admin_bar->add_node(
+array(
+'id'    => 'egc_upload_event_gallery',
+'title' => esc_html__( 'Nahrát novou galerii pro události', 'event-gallery-creator' ),
+'href'  => $this->admin_url(),
+)
 );
 }
 
@@ -478,6 +493,40 @@ wp_reset_postdata();
 }
 
 final class EGC_Gallery_Service {
+private function assign_default_label( $gallery_id, $post_type ) {
+$taxonomies = get_object_taxonomies( $post_type, 'names' );
+if ( empty( $taxonomies ) ) {
+return true;
+}
+
+$preferred = array( 'post_tag', 'gllr_tag', 'gallery_tag' );
+$targets   = array();
+
+foreach ( $preferred as $taxonomy ) {
+if ( in_array( $taxonomy, $taxonomies, true ) && taxonomy_exists( $taxonomy ) ) {
+$targets[] = $taxonomy;
+}
+}
+
+if ( empty( $targets ) ) {
+foreach ( $taxonomies as $taxonomy ) {
+$taxonomy_object = get_taxonomy( $taxonomy );
+if ( $taxonomy_object && ! $taxonomy_object->hierarchical ) {
+$targets[] = $taxonomy;
+}
+}
+}
+
+foreach ( $targets as $taxonomy ) {
+$result = wp_set_object_terms( $gallery_id, array( 'Default' ), $taxonomy, true );
+if ( is_wp_error( $result ) ) {
+return $result;
+}
+}
+
+return true;
+}
+
 private function discover_post_type() {
 global $gllr_options;
 
@@ -541,6 +590,11 @@ update_post_meta( $gallery_id, '_gallery_images', implode( ',', $ids ) );
 
 foreach ( $ids as $index => $attachment_id ) {
 update_post_meta( $attachment_id, '_gallery_order_' . $gallery_id, $index + 1 );
+}
+
+$default_label_result = $this->assign_default_label( $gallery_id, $post_type );
+if ( is_wp_error( $default_label_result ) ) {
+return $default_label_result;
 }
 
 return (int) $gallery_id;
