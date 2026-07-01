@@ -501,7 +501,18 @@ if ( empty( $taxonomies ) ) {
 return true;
 }
 
-$preferred = array( 'post_tag', 'gllr_tag', 'gallery_tag' );
+$preferred = array(
+'category',
+'gllr_category',
+'gllr_categories',
+'gallery_category',
+'gallery_categories',
+'post_tag',
+'gllr_tag',
+'gllr_tags',
+'gallery_tag',
+'gallery_tags',
+);
 $targets   = array();
 
 foreach ( $preferred as $taxonomy ) {
