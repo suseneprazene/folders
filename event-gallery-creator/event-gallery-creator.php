@@ -292,10 +292,11 @@ if ( '' === $post_type ) {
 return new WP_Query( array( 'post__in' => array( 0 ) ) );
 }
 
-$meta_query = array(
+$current_datetime = current_datetime()->format( 'Y-m-d H:i:s' );
+$meta_query       = array(
 array(
 'key'     => '_EventStartDate',
-'value'   => current_time( 'mysql' ),
+'value'   => $current_datetime,
 'compare' => '<=',
 'type'    => 'DATETIME',
 ),
@@ -322,7 +323,7 @@ $args = array(
 'posts_per_page' => $per_page,
 'paged'          => $paged,
 'meta_key'       => '_EventStartDate',
-'orderby'        => 'meta_value',
+'orderby'        => 'meta_value_datetime',
 'order'          => 'DESC',
 'meta_query'     => $meta_query,
 );
@@ -497,12 +498,11 @@ return $slug;
 }
 
 global $wpdb;
-$post_type = $wpdb->get_var(
-$wpdb->prepare(
-"SELECT p.post_type FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID WHERE pm.meta_key = %s LIMIT 1",
+$sql = $wpdb->prepare(
+'SELECT p.post_type FROM ' . $wpdb->posts . ' p INNER JOIN ' . $wpdb->postmeta . ' pm ON pm.post_id = p.ID WHERE pm.meta_key = %s LIMIT 1',
 '_gallery_images'
-)
 );
+$post_type = $wpdb->get_var( $sql );
 if ( ! empty( $post_type ) && post_type_exists( $post_type ) ) {
 return $post_type;
 }
