@@ -493,6 +493,8 @@ wp_reset_postdata();
 }
 
 final class EGC_Gallery_Service {
+const DEFAULT_LABEL = 'Default';
+
 private function assign_default_label( $gallery_id, $post_type ) {
 $taxonomies = get_object_taxonomies( $post_type, 'names' );
 if ( empty( $taxonomies ) ) {
@@ -518,7 +520,7 @@ $targets[] = $taxonomy;
 }
 
 foreach ( $targets as $taxonomy ) {
-$result = wp_set_object_terms( $gallery_id, array( 'Default' ), $taxonomy, true );
+$result = wp_set_object_terms( $gallery_id, array( self::DEFAULT_LABEL ), $taxonomy, true );
 if ( is_wp_error( $result ) ) {
 return $result;
 }
